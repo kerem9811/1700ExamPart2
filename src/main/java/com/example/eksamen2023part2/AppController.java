@@ -1,6 +1,5 @@
 package com.example.eksamen2023part2;
 
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.apache.catalina.User;
@@ -8,7 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,7 +17,8 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.hibernate.internal.CoreLogging.logger;
+
+//TODO MAKE MANY COMMENTS :>)
 
 @RestController
 public class AppController {
@@ -54,16 +56,18 @@ Let’s consider that you already set up a connection for the DB and it works fi
 choose any way you want to save the data in the DB, if you use the “new way” with
 Hibernate and JPA, please also define the interface. If the transaction with the DB is not
 successful make sure to handle the error*/
-    @GetMapping("/saveCitizen")
-    public void saveCitizen(@RequestBody Citizen newcitizen, HttpServletResponse response) throws IOException {
+    @PostMapping("/saveCitizen")
+    public ResponseEntity<String> saveCitizen(@RequestBody Citizen newcitizen, HttpServletResponse response) throws IOException {
         try {
             Citizen newCitizen = citizenRepo.save(newcitizen);
             System.out.println("Citizen saved " + newCitizen);
             logger.info("Citizen {} saved: ", newCitizen);
+            return ResponseEntity.ok("Citizen saved successfully");
         } catch (Exception e) {
             System.out.println("Error saving citizen " + newcitizen);
-            String error = "Could not save citizen" + e.getMessage();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, error);
+            logger.error("Error saving citizen {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Could not save citizen");
         }
     }
 
@@ -78,14 +82,17 @@ are logged in. If you are, then proceed with the changes. (Pay attention to the 
 to make in the Data Base. We first need to retrieve the list, then check the condition (citizen
 age < 18), and in the end we have to interrogate the DB again in order to delete those who
 don't fit the description).*/
-    @GetMapping("/login")
-    public void newUser(User newUser, HttpServletResponse response) throws IOException {
+    @PostMapping("/login")
+    public String newUser(User newUser, HttpServletResponse response) throws IOException {
         try {
             session.setAttribute("loggedIn", newUser);
-            logger.info("Logged in {}", newUser);
+            response.setStatus(200);
+            logger.info("Logged in {}", newUser.getFullName());
+            return "Success :)";
         } catch (Exception e) {
             response.sendError(400, "Could not log in");
-            logger.info(String.valueOf(e));
+            logger.error("Error logging in {}", e.getMessage());
+            return "Unsuccessful :(";
         }
     }
 
@@ -95,8 +102,8 @@ don't fit the description).*/
         System.out.println("Logged out");
     }
 
-    @GetMapping("/removeUnderage")
-    public boolean removeUnderage(HttpServletResponse response) throws IOException {
+    @PostMapping("/removeUnderage")
+    public ResponseEntity<String> removeUnderage(HttpServletResponse response) throws IOException {
         if (session.getAttribute("loggedIn") != null) {
             try {
                 List<Citizen> citizenList = citizenRepo.findAll();
@@ -106,16 +113,19 @@ don't fit the description).*/
                         System.out.println(citizen.getFirstname() + " " + citizen.getLastname() + "(" + citizen.getAge() + ") deleted.");
                         logger.info("{} deleted", citizen.getFirstname());
                     }
-                    return true;
+                    return ResponseEntity.ok("Underage citizens removed");
                 }
             } catch (Exception e) {
                 logger.error("Error changing database {}", e.getMessage());
                 response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value());
-                return false;
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to remove underage citizens");
             }
         }
-        return false;
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Not logged in");
     }
+
 
     /*Task 7
 Retrieve all the citizens from the application using a new endpoint and send them in the
@@ -124,10 +134,8 @@ info by sorting alphabetically ascending using a Java method*/
     @GetMapping("/allCitizens")
     public List<Citizen> returnAll() {
         List<Citizen> newlist = citizenRepo.findAll();
-        String stringlist = newlist.toString();
-        logger.info("All citizens {}", stringlist);
         newlist.sort(Comparator.comparing(Citizen::getLastname));
-        logger.info("All citizens sorted {}",newlist);
+        logger.info("All citizens (sorted): {}", newlist);
         return newlist;
     }
 }
