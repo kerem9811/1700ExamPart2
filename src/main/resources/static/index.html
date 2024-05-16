@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Eksamen 2023</title>
+    <script src="script.js"></script>
+</head>
+<body>
+<!--1. Let’s create a simple UI first. Create a form using HTML,CSS,JS. You should have simple
+user validation such as check for null on all fields. Please add fields for name, surname, date
+of birth, Social Security Number, phone number, email address, city, street and an HTML
+button. Please also add custom validation for email address and phone number (hint:
+regex).-->
+<div id="newcitizen">
+    <form id="citizenform">
+        <p>Firstname: <input id="firstname" required type="text"></p>
+        <p>Lastname: <input id="lastname" required type="text"></p>
+        <p>Date of Birth: <input id="birthday" required type="date"></p>
+        <p>SSN: <input id="ssn" required type="number"></p>
+        <p>Phone: <input id="phone" pattern="[2-7,9]\d{7}" required type="tel"></p>
+        <p>Email: <input id="email" pattern="[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$" required type="email"></p>
+        <p>City: <input id="city" required type="text"></p>
+        <p>Street: <input id="street" required type="text"></p>
+        <p><input type="submit" value="Register"></p>
+    </form>
+</div>
+</body>
+</html>
